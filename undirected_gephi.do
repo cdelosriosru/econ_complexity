@@ -11,35 +11,57 @@ cap log close
 clear all
 
 * paths
-
-global rawdata "C:/Users/camilodel/Dropbox/Networks_Extractives_2020/Resultados may 14 2020"
-capture mkdir "${rawdata}/txt"
-global textfiles "${rawdata}/txt"
+global data "C:/Users/camilodel/Dropbox/Networks_Extractives_2020/DATA"
+global rawdata_un "${data}/rawdata/undirected"
+capture mkdir "${rawdata_un}/txt"
+global textfiles "${rawdata_un}/txt"
 global matlab "PATH WHERE MATLAB CODE SAVES SIMI MATRIX"
-global gephi "PATH TO FOLDER WHERE WE ARE GOING TO SAVE THE FILES TO BE USED IN GEPHI"
-global rawdata "C:/Users/camilodel/Desktop/dropbox/results"
-global matlab "C:/Users/camilodel/Desktop/dropbox/results/txt"
+global gephi_un "${data}/gephi_undirected"
 
 
 *----------------------------------EDGES FILES----------------------------------
 
 * Create local with names of all the files in folder with raw data (the results Luis sent)
 
-local files : dir "${rawdata}" files "*.dta"
+local files : dir "${rawdata_un}" files "*.dta"
 
 foreach file in `files' { // loop over every file in the rawdata folder
 	
-	use "${rawdata}/`file'", clear
+	use "${rawdata_un}/`file'", clear
 	
 	rename ind_i Source
 	rename ind_j Target
 	rename SRt Weight
 	keep Source Target Weight 
 	
-	drop if Source==. // if we dont do this it wont work
-	drop if Target==. // if we dont do this it wont work
+	preserve									// this is necessary to make the full rectangular matrix and avoid any error
+		keep Source
+		rename Source id
+		duplicates drop id, force
+		tempfile temp_ids
+		sa `temp_ids'
+	restore
+			
+	rename Target id
+	merge m:1 id using  `temp_ids', gen(m_f_s)
+	rename id Target
+			
+	preserve
+		keep Target
+		rename Target id
+		duplicates drop id, force
+		tempfile temp_ids
+		sa `temp_ids'
+	restore
+			
+	rename Source id
+	merge m:1 id using `temp_ids', gen(m_f_t)
+	rename id Source
+			
+	fillin Source Target
 	
-	fillin Source Target // create with missing all the possible combinations of Source andTarget (rectangularize data)
+	drop if Source==.
+	drop if Target==.
 
 	replace Weight=0 if Weight==.
 	replace Weight=0 if Source==Target
@@ -72,7 +94,7 @@ foreach file in `files' { // loop over every file in textfiles folder
 	
 }
 
-local files : dir "${rawdata}" files "*.dta"
+local files : dir "${rawdata_un}" files "*.dta"
 
 foreach file in `files' { // I have to do this part of the loop again since this is going to be a three step process. But in a scenario where everything is done with a single CPU this part could be earased
 	
@@ -80,17 +102,41 @@ foreach file in `files' { // I have to do this part of the loop again since this
 	
 	* we could erase this part  until right before we import the simi files if we'd use the same cpu
 	
-	use "${rawdata}/`file'", clear
+	use "${rawdata_un}/`file'", clear
 	
 	rename ind_i Source
 	rename ind_j Target
 	rename SRt Weight
 	keep Source Target Weight 
 	
-	drop if Source==. // if we dont do this it wont work
-	drop if Target==. // if we dont do this it wont work
+	preserve									// this is necessary to make the full rectangular matrix and avoid any error
+		keep Source
+		rename Source id
+		duplicates drop id, force
+		tempfile temp_ids
+		sa `temp_ids'
+	restore
+			
+	rename Target id
+	merge m:1 id using  `temp_ids', gen(m_f_s)
+	rename id Target
+			
+	preserve
+		keep Target
+		rename Target id
+		duplicates drop id, force
+		tempfile temp_ids
+		sa `temp_ids'
+	restore
+			
+	rename Source id
+	merge m:1 id using `temp_ids', gen(m_f_t)
+	rename id Source
+			
+	fillin Source Target
 	
-	fillin Source Target // create with missing all the possible combinations of Source andTarget (rectangularize data)
+	drop if Source==.
+	drop if Target==.
 	
 	replace Weight=0 if Weight==.
 	replace Weight=0 if Source==Target
@@ -105,8 +151,9 @@ foreach file in `files' { // I have to do this part of the loop again since this
 		
 	mata flow = st_data(.,"Weight")  // returns all observations in the Weight variable (a single column)
 	mata flow = rowshape(flow,`k') // Converts flow to a matrix with `k' rows. This means that every column makes reference to ind_1 
-	
-	
+	mata rows(flow)
+	mata cols(flow)
+
 	mata simi_mst_flow = mm_insheet("$matlab/simi_`simif'.txt", ",") // read the file created in MATLAB with the .m code
 
 	set more off
@@ -124,7 +171,14 @@ foreach file in `files' { // I have to do this part of the loop again since this
 	sort Source Target
 	mata st_store(.,"Flow_MST",tostata) 
 	gen MST=Flow_MST>0
-	sa "${gephi}/COL_edges_`simif'.dta", replace
+	
+	tostring Source, gen(str_id_4)
+    gen id_4=Source 
+	
+	outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`k'_`simif'.txt", replace
+	outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`k'_`simif'.csv", replace comma
+
+	sa "${gephi_un}/COL_edges_`simif'.dta", replace
 
 	forvalues k=40(10)100{
 	
@@ -137,8 +191,8 @@ foreach file in `files' { // I have to do this part of the loop again since this
 			gen id_4=Source 
 			sort id_4
 			sort Source Target
-			outsheet Source Target Weight MST Flow_MST using COL_edges_`k'_`simif'.txt, replace
-			outsheet Source Target Weight MST Flow_MST using COL_edges_`k'_`simif'.csv, replace comma
+			outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`k'_`simif'.txt", replace
+			outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`k'_`simif'.csv", replace comma
 			
 		restore
 		
