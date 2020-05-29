@@ -151,8 +151,6 @@ foreach file in `files' { // I have to do this part of the loop again since this
 		
 	mata flow = st_data(.,"Weight")  // returns all observations in the Weight variable (a single column)
 	mata flow = rowshape(flow,`k') // Converts flow to a matrix with `k' rows. This means that every column makes reference to ind_1 
-	mata rows(flow)
-	mata cols(flow)
 
 	mata simi_mst_flow = mm_insheet("$matlab/simi_`simif'.txt", ",") // read the file created in MATLAB with the .m code
 
