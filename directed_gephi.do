@@ -24,7 +24,7 @@ local files : dir "${rawdata_di}" files "*.dta"
 
 foreach file in `files' { // I have to do this part of the loop again since this is going to be a three step process. But in a scenario where everything is done with a single CPU this part could be earased
 	
-	local simif = substr("`file'", 1, strpos("`file'",".")-1) // I use this to have only the name of the file without the extension it its way more useful. 
+	local simif = substr("`file'", 1, strpos("`file'",".dta")-1) // I use this to have only the name of the file without the extension it its way more useful. 
 	
 	* we could erase this part  until right before we import the simi files if we'd use the same cpu
 	
@@ -76,13 +76,15 @@ foreach file in `files' { // I have to do this part of the loop again since this
 	gen Flow_Tree=Weight if maxout==Weight
 	replace Flow_Tree=maxin if maxin==Weight
 	
-	drop if Flow_tree==.
+	drop if Flow_Tree==.
+	
+	replace Flow_Tree=1-Flow_Tree
 	
 	tostring Source, gen(str_id_4)
 	gen id_4=Source 
 	
-	outsheet Source Target Weight MST Flow_MST using "${gephi_di}/ COL_edges_`k'_`simif'.txt", replace
-	outsheet Source Target Weight MST Flow_MST using "${gephi_di}/ COL_edges_`k'_`simif'.csv", replace comma
+	outsheet Source Target Weight Flow_Tree  using "${gephi_di}/ COL_edges_`k'_`simif'.txt", replace
+	outsheet Source Target Weight Flow_Tree using "${gephi_di}/ COL_edges_`k'_`simif'.csv", replace comma
 	
 	sa "${gephi_di}/COL_edges_`file'.dta", replace
 
