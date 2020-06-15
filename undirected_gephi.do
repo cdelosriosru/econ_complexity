@@ -15,9 +15,8 @@ global data "C:/Users/camilodel/Dropbox/Networks_Extractives_2020/DATA"
 global rawdata_un "${data}/rawdata/undirected"
 capture mkdir "${rawdata_un}/txt"
 global textfiles "${rawdata_un}/txt"
-global matlab "PATH WHERE MATLAB CODE SAVES SIMI MATRIX"
+global matlab "${data}/rawdata/matlab"
 global gephi_un "${data}/gephi_undirected"
-
 
 *----------------------------------EDGES FILES----------------------------------
 
@@ -27,8 +26,10 @@ local files : dir "${rawdata_un}" files "*.dta"
 
 foreach file in `files' { // loop over every file in the rawdata folder
 	
-	use "${rawdata_un}/`file'", clear
-	
+	*use "${rawdata_un}/`file'", clear
+		
+	local simif = substr("`file'", 1, strpos("`file'",".dta")-1) // I use this to have only the name of the file without the extension it its way more useful. 
+
 	rename ind_i Source
 	rename ind_j Target
 	rename SRt Weight
@@ -76,21 +77,25 @@ foreach file in `files' { // loop over every file in the rawdata folder
 		
 	mata flow = st_data(.,"Weight")  // returns all observations in the Weight variable (a single column)
 	mata flow = rowshape(flow,`k') // Converts flow to a matrix with `k' rows. This means that every column makes reference to ind_1 
-	mata mm_outsheet("${textfiles}/`file'.txt", strofreal(flow), mode="r") // Write ASCII file, named flow, with values as strings, replace it. 
+	mata mm_outsheet("${textfiles}/`simif'.txt", strofreal(flow), mode="r") // Write ASCII file, named flow, with values as strings, replace it. 
 
 }
 
-local files : dir "${textfiles}" files "*.txt"
+local mylist : dir "${textfiles}" files "*.txt"
 
-foreach file in `files' { // loop over every file in textfiles folder
+*cd "$textfiles"
+*local mylist col_sr_f.all_y.1_w.1_l.0.txt col_sr_f.all_y.1_w.3_l.0.txt col_sr_f.all_y.1_w.4_l.0.txt col_sr_f.all_y.1_w.all_l.0.txt col_sr_f.all_y.2_w.1_l.0.txt col_sr_f.all_y.2_w.2_l.0.txt col_sr_f.all_y.2_w.3_l.0.txt col_sr_f.all_y.2_w.4_l.0.txt col_sr_f.all_y.2_w.all_l.0.txt col_sr_f.all_y.3_w.1_l.0.txt col_sr_f.all_y.3_w.2_l.0.txt col_sr_f.all_y.3_w.4_l.0.txt col_sr_f.all_y.3_w.all_l.0.txt col_sr_f.all_y.all_w.1_l.0.txt col_sr_f.all_y.all_w.2_l.0.txt col_sr_f.all_y.all_w.3_l.0.txt col_sr_f.all_y.all_w.4_l.0.txt col_sr_f.all_y.all_w.all_l.0.txt 
+
+foreach filename of local mylist { // loop over every file in textfiles folder
 	
 	cd "$textfiles"
-	shell ren "`file'" "flow.txt"
+	shell ren "`mylist'" "flow.txt"
 	
-	shell "C:\Program Files\MATLAB\R2012a\bin\matlab.exe" -nojvm -nodesktop -nodisplay -r "build_gephi_files();exit" > log.txt // run function build_gephi_files in MATLAB
+	shell "C:\Program Files\MATLAB\R2017a\bin\matlab.exe" -nojvm -nodesktop -nodisplay -r "COL_build_gephi_files_4d();exit" > log.txt // run function build_gephi_files in MATLAB
 	
+	shell ren "flow.txt" "`mylist'"
 	cd "$matlab"
-	shell ren "simi_mst_flow.txt" "simi_`file'.txt"
+	shell ren "simi_mst_flow.txt" "simi_`mylist'"
 	
 }
 
@@ -201,6 +206,3 @@ foreach file in `files' { // I have to do this part of the loop again since this
 *----------------------------------NODES FILE-----------------------------------
 
 *WORK IN PROGRESS.....
-
-
-
