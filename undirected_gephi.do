@@ -11,12 +11,12 @@ cap log close
 clear all
 
 * paths
-global data "C:/Users/camilodel/Dropbox/Networks_Extractives_2020/DATA"
+global data "C:/Users/cdelo/Dropbox/Networks_Extractives_2020/DATA"
 global rawdata_un "${data}/rawdata/undirected"
 capture mkdir "${rawdata_un}/txt"
 global textfiles "${rawdata_un}/txt"
-global matlab "${data}/rawdata/matlab"
-global gephi_un "${data}/gephi_undirected"
+global matlab "${data}/rawdata/matlab2"
+global gephi_un "${data}/gephi_undirected2"
 
 *----------------------------------EDGES FILES----------------------------------
 
@@ -26,7 +26,7 @@ local files : dir "${rawdata_un}" files "*.dta"
 
 foreach file in `files' { // loop over every file in the rawdata folder
 	
-	*use "${rawdata_un}/`file'", clear
+	use "${rawdata_un}/`file'", clear
 		
 	local simif = substr("`file'", 1, strpos("`file'",".dta")-1) // I use this to have only the name of the file without the extension it its way more useful. 
 
@@ -83,19 +83,25 @@ foreach file in `files' { // loop over every file in the rawdata folder
 
 local mylist : dir "${textfiles}" files "*.txt"
 
-*cd "$textfiles"
-*local mylist col_sr_f.all_y.1_w.1_l.0.txt col_sr_f.all_y.1_w.3_l.0.txt col_sr_f.all_y.1_w.4_l.0.txt col_sr_f.all_y.1_w.all_l.0.txt col_sr_f.all_y.2_w.1_l.0.txt col_sr_f.all_y.2_w.2_l.0.txt col_sr_f.all_y.2_w.3_l.0.txt col_sr_f.all_y.2_w.4_l.0.txt col_sr_f.all_y.2_w.all_l.0.txt col_sr_f.all_y.3_w.1_l.0.txt col_sr_f.all_y.3_w.2_l.0.txt col_sr_f.all_y.3_w.4_l.0.txt col_sr_f.all_y.3_w.all_l.0.txt col_sr_f.all_y.all_w.1_l.0.txt col_sr_f.all_y.all_w.2_l.0.txt col_sr_f.all_y.all_w.3_l.0.txt col_sr_f.all_y.all_w.4_l.0.txt col_sr_f.all_y.all_w.all_l.0.txt 
-
 foreach filename of local mylist { // loop over every file in textfiles folder
 	
 	cd "$textfiles"
-	shell ren "`mylist'" "flow.txt"
+	shell ren "`filename'" "flow.txt"
 	
-	shell "C:\Program Files\MATLAB\R2017a\bin\matlab.exe" -nojvm -nodesktop -nodisplay -r "COL_build_gephi_files_4d();exit" > log.txt // run function build_gephi_files in MATLAB
+	sleep 10000
 	
-	shell ren "flow.txt" "`mylist'"
+	shell "C:/Program Files/MATLAB/R2020a/bin/matlab.exe" -nojvm -nodesktop -nodisplay -r "COL_build_gephi_files_4dcdr();exit" > log.txt // run function build_gephi_files in MATLAB
+	sleep 100000
+
+	cd "$textfiles"
+	shell ren "flow.txt" "`filename'"
+	
+	sleep 10000
+	
 	cd "$matlab"
-	shell ren "simi_mst_flow.txt" "simi_`mylist'"
+	shell ren "simi_mst_flow.txt" "simi_`filename'"
+	sleep 10000
+
 	
 }
 
@@ -178,10 +184,10 @@ foreach file in `files' { // I have to do this part of the loop again since this
 	tostring Source, gen(str_id_4)
     gen id_4=Source 
 	
-	outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`k'_`simif'.txt", replace
-	outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`k'_`simif'.csv", replace comma
+	outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`simif'.txt", replace
+	outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`simif'.csv", replace comma
 
-	sa "${gephi_un}/COL_edges_`simif'.dta", replace
+	*sa "${gephi_un}/COL_edges_`simif'.dta", replace
 
 	forvalues k=40(10)100{
 	
@@ -190,8 +196,8 @@ foreach file in `files' { // I have to do this part of the loop again since this
 			keep if MST>0 | Weight>`k'/100
 			sort Source
 			*rename Source id
-			tostring Source, gen(str_id_4)
-			gen id_4=Source 
+			capture tostring Source, gen(str_id_4)
+			capture gen id_4=Source 
 			sort id_4
 			sort Source Target
 			outsheet Source Target Weight MST Flow_MST using "${gephi_un}/COL_edges_`k'_`simif'.txt", replace
