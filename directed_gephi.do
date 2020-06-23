@@ -79,13 +79,13 @@ foreach file in `files' { // I have to do this part of the loop again since this
 	drop if Flow_Tree==.
 	
 	replace Flow_Tree=1-Flow_Tree
-	
+	drop if Flow_Tree==1 // this drops obs that only have one connection and that is the strongest. 
 	tostring Source, gen(str_id_4)
 	gen id_4=Source 
 	
-	outsheet Source Target Weight Flow_Tree  using "${gephi_di}/ COL_edges_`k'_`simif'.txt", replace
+	*outsheet Source Target Weight Flow_Tree  using "${gephi_di}/ COL_edges_`k'_`simif'.txt", replace
 	outsheet Source Target Weight Flow_Tree using "${gephi_di}/ COL_edges_`k'_`simif'.csv", replace comma
 	
-	sa "${gephi_di}/COL_edges_`file'.dta", replace
+	*sa "${gephi_di}/COL_edges_`file'.dta", replace
 
 }
