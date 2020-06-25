@@ -11,8 +11,8 @@ cap log close
 clear all
 
 * paths
-
-global data "C:/Users/camilodel/Dropbox/Networks_Extractives_2020/DATA"
+global data "C:/Users/camilodel/Dropbox/Networks_Extractives_2020/DATA" // IDB laptop
+global data "C:/Users/cdelo/Dropbox/Networks_Extractives_2020/DATA" // personal laptop
 global rawdata_di "${data}/rawdata/directed"
 global gephi_di "${data}/gephi_directed"
 
@@ -73,13 +73,30 @@ foreach file in `files' { // I have to do this part of the loop again since this
 	bys Source: egen maxout=max(Weight)  // take the max "outflow"
 	bys Target: egen maxin=max(Weight)   // take the max "inflow"
 
-	gen Flow_Tree=Weight if maxout==Weight
-	replace Flow_Tree=maxin if maxin==Weight
-	
-	drop if Flow_Tree==.
-	
+	keep if Weight==maxout | Weight==maxin
+
+	replace maxin=. if maxin!=Weight
+	replace maxout=. if maxout!=Weight
+	gen Flow_Tree=maxout 
+	replace Flow_Tree=maxin if Flow_Tree==.
 	replace Flow_Tree=1-Flow_Tree
+	
 	drop if Flow_Tree==1 // this drops obs that only have one connection and that is the strongest. 
+	
+	
+	*replace Flow_Tree=-(Flow_Tree-1)
+
+	
+	*bys Source: egen maxout2=max(Flow_Tree)  // take the max "outflow"
+	*bys Target: egen maxin2=max(Flow_Tree)   // take the max "inflow"
+	
+	*duplicates tag Source, gen(du)
+	*sort Source Weight
+	
+	
+
+	
+	
 	tostring Source, gen(str_id_4)
 	gen id_4=Source 
 	

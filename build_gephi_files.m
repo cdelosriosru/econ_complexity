@@ -3,7 +3,7 @@ function x=build_gephi_files()
 
 x=1;
 
-A=dlmread('C:/Users/cyber_000/Documents/Dropbox/Harvard/Job Placement/CID/Projects/Other/Gephi Workshop2/flow.txt'); % read flow.txt and name it A
+A=dlmread('C:/Users/cdelo/Dropbox/Networks_Extractives_2020/DATA/rawdata/undirected/txt/flow.txt'); % read flow.txt and name it A
 
 [r c]=find(A); % returns the row and column subscripts of each nonzero element in array A
 for i=1:size(r,1)  % for values i=1 until the number of rows (r) of A
@@ -25,5 +25,5 @@ for i=1:size(r,1)
 end
 
 % find MST of positive values
-dlmwrite('C:/Users/cyber_000/Documents/Dropbox/Harvard/Job Placement/CID/Projects/Other/Gephi Workshop2/simi_mst_flow.txt',AAA) % exporte como simi_mst_flow
+dlmwrite('C:/Users/cdelo/Dropbox/Networks_Extractives_2020/DATA/rawdata/matlab2/simi_mst_flow.txt',AAA) % exporte como simi_mst_flow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
