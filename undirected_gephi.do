@@ -15,8 +15,8 @@ global data "C:/Users/cdelo/Dropbox/Networks_Extractives_2020/DATA"
 global rawdata_un "${data}/rawdata/undirected"
 capture mkdir "${rawdata_un}/txt"
 global textfiles "${rawdata_un}/txt"
-global matlab "${data}/rawdata/matlab2"
-global gephi_un "${data}/gephi_undirected2"
+global matlab "${data}/rawdata/matlab"
+global gephi_un "${data}/gephi_undirected"
 
 *----------------------------------EDGES FILES----------------------------------
 
@@ -206,6 +206,15 @@ foreach file in `files' { // I have to do this part of the loop again since this
 		restore
 		
 	}
+}
+
+
+local files : dir "${gephi_un}" files "COL_edges_col**.csv"
+
+foreach x in `files'{
+	import delimited "${gephi_un}/`x'", case(preserve) clear 
+	keep if MST==1
+	outsheet Source Target Weight MST Flow_MST using "${gephi_un}/MST_`x'", replace comma
 }
 
 
